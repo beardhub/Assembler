@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Assembler</title>
+		<meta charset="utf-8">
+		<script type="text/javascript" src="script.js"></script>
+		<style>
+			.invisible {visibility:hidden;display:none;}
+			.visible {visibility:hidden;display:none;}
+			.op {width:5em;text-align:center;}
+			.des {width:25em;text-align:left;}
+			table, th, td {border:1px solid black;}
+		</style>
+	</head>
+	<body onload="init();">
+		<input type="button" value="Hex" onclick="switchBase('hex')">
+		<input type="button" value="Decimal" onclick="switchBase('dec')">
+		<input type="button" value="Binary" onclick="switchBase('bin')">
+
+		<input type="button" value="Randomize" onclick="random()">
+		<input type="button" value="Reset" onclick="init()">
+
+		<input type="button" value="Clear registers" onclick="cclear('regs')">
+		<input type="button" value="Clear memory" onclick="cclear('mem')">
+		<input type="button" value="Clear output" onclick="cclear('out')">
+
+		<input type="button" value="Import Program" onclick="edit('load',0)">
+		<input type="button" value="Export Program" onclick="exprt()">
+
+		<input type="button" value="Start Over" onclick="rstart()">
+		<input type="button" value="Run" onclick="run()">
+		<input type="button" value="Step" onclick="stepfunc()">
+
+		<input type="button" value="Import Fibonacci Program" 
+			onclick="load('hex','F00022012401250B26225312402140323613332D56465004B51CB00AC000F222B000')">
+
+		<div id="machine" class="" style="width:48em;float:left;">
+			<input type="button" value="Switch to Assembler" onclick="switchEditor('assembler')">
+			<div id="pc"></div>
+			<div id="ir"></div>
+			<div id="regs" style="width:48em;"></div>
+			<div id="table" style="width:48em;"></div>
+			<div id="cellEdit"><br></div>
+			<div id="output"></div>
+		</div>
+		<div id="assembler" class="invisible" style="width:48em;float:left;">
+			<input type="button" value="Switch to Machine" onclick="switchEditor('machine')">
+			<div id="txtarea">
+				<textarea id="asmarea" rows="10" cols="70"></textarea>
+			</div>
+		</div>
+		<div id="aappendix" class="invisible" style="float:left;">
+			<h1>Assembly Appendix</h1>
+		</div>
+		<div id="happendix" class="" style="float:left;">
+			<h1>Hex Appendix</h1>
+
+			<table>
+				<tr>
+					<th class="op">Op-code</td>
+					<th class="op">Operand</td>
+					<th style="width:25em;text-align:center;">Description</td>
+				<tr>
+				<tr>
+					<td class="op">1</td>
+					<td class="op">RXY</td>
+					<td class="des">LOAD the register R with the bit pattern found in the memory cell whose address is XY.<br>
+						Example: 14A3 would cause the contents of memory cell located at the address A3 to be placed in register 4.</td>
+				<tr>
+				<tr>
+					<td class="op">2</td>
+					<td class="op">RXY</td>
+					<td class="des">LOAD the register R with the bit pattern XY.<br>
+						Example: 20A3 would cause the value A3 to be placed in register 0.</td>
+				</tr>
+				<tr>
+					<td class="op">3</td>
+					<td class="op">RXY</td>
+					<td class="des">STORE the bit pattern found in register R in the memory cell whose address is XY.<br>
+						Example: 35B1 would cause the contents of register 5 to be placed in the memory cell whose address is B1.</td>
+				</tr>
+				<tr>
+					<td class="op">4</td>
+					<td class="op">0RS</td>
+					<td class="des">MOVE the bit pattern found in register R to register S.<br>
+						Example: 40A4 would cause the contents of register A to be copied into register 4.</td>
+				</tr>
+				<tr>
+					<td class="op">5</td>
+					<td class="op">RST</td>
+					<td class="des">ADD the bit patterns in registers S and T as though they were two's complement 
+						representations and leave the result in register R.<br>
+						Example: 5726 would cause the binary values in registers 2 and 6 to be added and the sum placed in register 7.</td>
+				</tr>
+				<tr>
+					<td class="op">6</td>
+					<td class="op">RST</td>
+					<td class="des">ADD the bit patterns in registers S and T as though they were represented values in floating-point notation 
+						and leave the floating point result in register R.<br>
+						Example: 634E would cause the values in registers 4 and E to be added as floating-point values and the result to be placed in register 3.</td>
+				</tr>
+				<tr>
+					<td class="op">7</td>
+					<td class="op">RST</td>
+					<td class="des">OR the bit patterns in registers S and T and place the result in register R.<br>
+						Example: 7CB4 would cause the result of ORing the contents of registers B and 4 to be placed in register C.</td>
+				</tr>
+				<tr>
+					<td class="op">8</td>
+					<td class="op">RST</td>
+					<td class="des">AND the bit patterns in registers S and T and place the result in register R.<br>
+						Example: 8045 would cause the result of ANDing the contents of registers 4 and 5 to be placed in register 0.</td>
+				</tr>
+				<tr>
+					<td class="op">9</td>
+					<td class="op">RST</td>
+					<td class="des">EXCLUSIVE OR the bit patterns in registers S and T and place the result in register R.</td>
+				</tr>
+				<tr>
+					<td class="op">A</td>
+					<td class="op">R0X</td>
+					<td class="des">ROTATE the bit pattern in register R one bit to the right X times. Each time place the bit that started at 
+						the low-order end at the high-order end.<br>
+						Example: A403 would cause the contents of register 4 to be rotated 3 bits to the right in a circular fashion.</td>
+				</tr>
+				<tr>
+					<td class="op">B</td>
+					<td class="op">RXY</td>
+					<td class="des">JUMP to the instruction located in the memory cell at address XY if the bit pattern in register R is
+						equal to the bit pattern in register 0. Otherwise, continue with the normal sequence of execution. 
+						(The jump is implemented by copying XY into the program counter during the execute phase.)<br>
+						Example: B43C would first compare the contents of register 4 with the contents of register 0.
+						If the two were equal, the pattern 3C would be placed in the program counter so that the next instruction executed
+						would be the one located at that memory address. Otherwise, nothing would be done and program execution would continue in its normal sequence.</td>
+				</tr>
+				<tr>
+					<td class="op">C</td>
+					<td class="op">000</td>
+					<td class="des">HALT execution.<br>
+						Example: C000 would cause the program execution to stop.</td>
+				</tr>
+				<tr>
+					<td class="op">F</td>
+					<td class="op">000</td>
+					<td class="des">CLEAR all registers and output then set the program counter to 0.<br>
+						Example: F000 would set all registers to 0 and empty the output, then set the program counter to 0 
+							and continue with the normal sequence of execution.</td>
+				</tr>
+				<tr>
+					<td class="op">F</td>
+					<td class="op">1ST</td>
+					<td class="des">CLEAR all registers from register S to register T.<br>
+						Example: F13A would set all registers to 0 starting at register 3 and ending at register A.</td>
+				</tr>
+				<tr>
+					<td class="op">F</td>
+					<td class="op">2XY</td>
+					<td class="des">CLEAR all memory cells starting with the memory cell at address XY until the end of the main memory.<br>
+						Example: F2AB would cause all memory cells after and including the memory cell at address AB to be set to 0.</td>
+				</tr>
+			</table>
+			<br>
+		</div>
+	</body>
+</html>
