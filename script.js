@@ -207,7 +207,7 @@ function parseCommand(command) {
 			}
 			break;
 	}
-	return command+"<br>";// "+result+"<br>";
+	return command+ "+result+"<br>";
 }
 function validateLen(value, base) {
 	var len = 0;
