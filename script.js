@@ -2,7 +2,7 @@ var memory, base, cellWidth, editCell, editType,
 	registers, IR, PC, execs, running;
 
 function init() {
-	memory = new Uint8Array(512);
+	memory = new Uint8Array(256);
 	registers = new Uint8Array(16);
 	IR = "0000";
 	PC = 0;
